@@ -1,0 +1,1387 @@
+From 39abc1f273bfd9ee61c815240695c031ed3c4702 Mon Sep 17 00:00:00 2001
+From: Hunseop Jeong <hs85.jeong@samsung.com>
+Date: Thu, 30 Nov 2017 19:28:35 +0900
+Subject: [PATCH] Refactoring WATT using modern JS framework
+
+Signed-off-by: Hunseop Jeong <hs85.jeong@samsung.com>
+---
+ .babelrc                           |   6 +
+ client/app.html                    |  31 ++++
+ client/app.template.html           |  31 ++++
+ client/app/app.config.js           |   9 +
+ client/app/app.js                  |  38 ++++
+ client/app/app.scss                |  25 +++
+ client/app/main/main.component.js  |  47 +++++
+ client/app/main/main.html          |  73 ++++++++
+ client/app/main/main.routes.js     |  10 +
+ client/polyfills.js                |  28 +++
+ package.json                       |  99 +++++-----
+ server/app.js                      |  22 +++
+ server/components/errors/index.js  |  18 ++
+ server/config/environment/index.js |  61 ++++++
+ server/config/express.js           | 133 +++++++++++++
+ server/index.js                    |  12 ++
+ server/routes.js                   |  22 +++
+ server/views/404.html              | 157 ++++++++++++++++
+ webpack.dev.js                     |   8 +
+ webpack.make.js                    | 372 +++++++++++++++++++++++++++++++++++++
+ 20 files changed, 1147 insertions(+), 55 deletions(-)
+ create mode 100644 .babelrc
+ create mode 100644 client/app.html
+ create mode 100644 client/app.template.html
+ create mode 100644 client/app/app.config.js
+ create mode 100644 client/app/app.js
+ create mode 100644 client/app/app.scss
+ create mode 100644 client/app/main/main.component.js
+ create mode 100644 client/app/main/main.html
+ create mode 100644 client/app/main/main.routes.js
+ create mode 100644 client/polyfills.js
+ create mode 100644 server/app.js
+ create mode 100644 server/components/errors/index.js
+ create mode 100644 server/config/environment/index.js
+ create mode 100644 server/config/express.js
+ create mode 100644 server/index.js
+ create mode 100644 server/routes.js
+ create mode 100644 server/views/404.html
+ create mode 100644 webpack.dev.js
+ create mode 100644 webpack.make.js
+
+diff --git a/.babelrc b/.babelrc
+new file mode 100644
+index 00000000..33f4a0d2
+--- /dev/null
++++ b/.babelrc
+@@ -0,0 +1,6 @@
++{
++    "presets": ["es2015"],
++    "plugins": [
++      "transform-class-properties"
++    ]
++}
+diff --git a/client/app.html b/client/app.html
+new file mode 100644
+index 00000000..75a9c6e8
+--- /dev/null
++++ b/client/app.html
+@@ -0,0 +1,31 @@
++<!doctype html>
++<html lang="en">
++<head>
++    <meta charset="utf-8">
++    <meta http-equiv="x-ua-compatible" content="ie=edge">
++    <base href="/">
++    <title>WEB ASSEMBLY TRANSLATION TOOLKIT</title>
++    <meta name="description" content="">
++    <meta name="viewport" content="width=device-width">
++    <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
++</head>
++<body>
++    <!--[if lt IE 9]>
++      <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
++    <![endif]-->
++
++    <!-- Google Analytics: change UA-XXXXX-X to be your site's ID -->
++    <script>
++      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
++      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
++      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
++      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
++      ga('create', 'UA-92087710-1');
++      ga('send', 'pageview');
++    </script>
++
++    <navbar></navbar>
++    <div ui-view=""></div>
++    <footer></footer>
++<script type="text/javascript" src="/vendor.bundle.js"></script><script type="text/javascript" src="/polyfills.bundle.js"></script><script type="text/javascript" src="/app.bundle.js"></script></body>
++</html>
+diff --git a/client/app.template.html b/client/app.template.html
+new file mode 100644
+index 00000000..c1cc1d4f
+--- /dev/null
++++ b/client/app.template.html
+@@ -0,0 +1,31 @@
++<!doctype html>
++<html lang="en">
++<head>
++    <meta charset="utf-8">
++    <meta http-equiv="x-ua-compatible" content="ie=edge">
++    <base href="/">
++    <title>WEB ASSEMBLY TRANSLATION TOOLKIT</title>
++    <meta name="description" content="">
++    <meta name="viewport" content="width=device-width">
++    <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
++</head>
++<body>
++    <!--[if lt IE 9]>
++      <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
++    <![endif]-->
++
++    <!-- Google Analytics: change UA-XXXXX-X to be your site's ID -->
++    <script>
++      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
++      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
++      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
++      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
++      ga('create', 'UA-92087710-1');
++      ga('send', 'pageview');
++    </script>
++
++    <navbar></navbar>
++    <div ui-view=""></div>
++    <footer></footer>
++</body>
++</html>
+diff --git a/client/app/app.config.js b/client/app/app.config.js
+new file mode 100644
+index 00000000..218cf460
+--- /dev/null
++++ b/client/app/app.config.js
+@@ -0,0 +1,9 @@
++'use strict';
++
++export function routeConfig($urlRouterProvider, $locationProvider) {
++  'ngInject';
++
++  $urlRouterProvider.otherwise('/');
++
++  $locationProvider.html5Mode(true);
++}
+diff --git a/client/app/app.js b/client/app/app.js
+new file mode 100644
+index 00000000..9ba50a21
+--- /dev/null
++++ b/client/app/app.js
+@@ -0,0 +1,38 @@
++'use strict';
++
++import angular from 'angular';
++// import ngAnimate from 'angular-animate';
++import ngCookies from 'angular-cookies';
++import ngResource from 'angular-resource';
++import ngSanitize from 'angular-sanitize';
++
++import uiRouter from 'angular-ui-router';
++import uiBootstrap from 'angular-ui-bootstrap';
++
++import {
++  routeConfig
++} from './app.config';
++
++// import navbar from '../components/navbar/navbar.component';
++// import footer from '../components/footer/footer.component';
++import main from './main/main.component';
++// import constants from './app.constants';
++// import util from '../components/util/util.module';
++
++import './app.scss';
++
++// angular.module('generatorAngularWithoutsocketApp', [ngCookies, ngResource, ngSanitize, uiRouter,
++//   uiBootstrap, navbar, footer, main, constants, util
++// ])
++//   .config(routeConfig);
++
++angular.module('wattApp', [ngCookies, ngResource, ngSanitize, uiRouter, uiBootstrap, main
++])
++  .config(routeConfig);
++
++angular.element(document)
++  .ready(() => {
++    angular.bootstrap(document, ['wattApp'], {
++      strictDi: true
++    });
++  });
+diff --git a/client/app/app.scss b/client/app/app.scss
+new file mode 100644
+index 00000000..b6a8fb6d
+--- /dev/null
++++ b/client/app/app.scss
+@@ -0,0 +1,25 @@
++$icon-font-path: '/assets/fonts/bootstrap/';
++@import '~bootstrap-sass/assets/stylesheets/bootstrap';
++@import '~bootstrap-social/bootstrap-social.scss';
++$fa-font-path: '/assets/fonts/font-awesome/';
++@import '~font-awesome/scss/font-awesome';
++// @import '~startbootstrap-creative/scss/creative';
++
++// @import url(http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,900|Roboto:300,500,700,900);
++
++/**
++ * App-wide Styles
++ */
++
++.browserupgrade {
++  margin: 0.2em 0;
++  background: #ccc;
++  color: #000;
++  padding: 0.2em 0;
++}
++
++// Component styles are injected through gulp
++/* inject:scss */
++// @import 'admin/admin.scss';
++// @import 'main/main.scss';
++/* endinject */
+diff --git a/client/app/main/main.component.js b/client/app/main/main.component.js
+new file mode 100644
+index 00000000..9f513b11
+--- /dev/null
++++ b/client/app/main/main.component.js
+@@ -0,0 +1,47 @@
++import angular from 'angular';
++import uiRouter from 'angular-ui-router';
++import routing from './main.routes';
++
++// export class MainController {
++//   awesomeThings = [];
++//   newThing = '';
++
++  /*@ngInject*/
++//   constructor($http, $scope, socket) {
++    // this.$http = $http;
++    // this.socket = socket;
++
++    // $scope.$on('$destroy', function() {
++    //   socket.unsyncUpdates('thing');
++    // });
++//   }
++
++//   $onInit() {
++//     this.$http.get('/api/things')
++//       .then(response => {
++//         this.awesomeThings = response.data;
++//         this.socket.syncUpdates('thing', this.awesomeThings);
++//       });
++//   }
++
++//   addThing() {
++//     if(this.newThing) {
++//       this.$http.post('/api/things', {
++//         name: this.newThing
++//       });
++//       this.newThing = '';
++//     }
++//   }
++
++//   deleteThing(thing) {
++//     this.$http.delete(`/api/things/${thing._id}`);
++//   }
++// }
++
++export default angular.module('wattApp.main', [uiRouter])
++  .config(routing)
++  .component('main', {
++    template: require('./main.html'),
++    // controller: MainController
++  })
++  .name;
+diff --git a/client/app/main/main.html b/client/app/main/main.html
+new file mode 100644
+index 00000000..33227a47
+--- /dev/null
++++ b/client/app/main/main.html
+@@ -0,0 +1,73 @@
++<header id="heading">
++    <div class="header-content">
++        <div class="header-content-inner">
++            <h1 id="homeHeading">Web Assembly Tizen Toolkit</h1>
++            <hr>
++            <p>WATT is server-based web assembly IDE</p>
++            <a href="#about" class="btn btn-primary btn-xl page-scroll">Find Out More</a>
++        </div>
++    </div>
++</header>
++<section class="bg-primary" id="about">
++    <div class="container">
++        <div class="row">
++            <div class="col-lg-8 col-lg-offset-2 text-center">
++                <h2 class="section-heading">We've got what you need!</h2>
++                <hr class="light">
++                <p class="text-faded">WATT has everything you need to create your new tizen web application and running in no time! All of the templates and samples on WATT.
++                </p>
++                <a href="/login" class="page-scroll btn btn-default btn-xl sr-button">Get Started!</a>
++            </div>
++        </div>
++    </div>
++</section>
++<section id="features">
++    <div class="container">
++        <div class="row">
++            <div class="col-lg-12 text-center">
++                <h2 class="section-heading">Features</h2>
++                <hr class="primary">
++            </div>
++        </div>
++    </div>
++    <div class="container">
++        <div class="row">
++            <div class="col-lg-3 col-md-6 text-center">
++                <div class="service-box">
++                    <i class="fa fa-4x fa-gear text-primary sr-icons"></i>
++                    <h3>WASM</h3>
++                    <p class="text-muted">You can compile native code to wasm using WATT!</p>
++                </div>
++            </div>
++            <div class="col-lg-3 col-md-6 text-center">
++                <div class="service-box">
++                    <i class="fa fa-4x fa-gamepad text-primary sr-icons"></i>
++                    <h3>Games</h3>
++                    <p class="text-muted">WATT is best suitable IDE to create the VR/AR games for Tizen</p>
++                </div>
++            </div>
++            <div class="col-lg-3 col-md-6 text-center">
++                <div class="service-box">
++                    <i class="fa fa-4x fa-desktop text-primary sr-icons"></i>
++                    <h3>Server-based Editor</h3>
++                    <p class="text-muted">You can make your tizen application on the web site!</p>
++                </div>
++            </div>
++            <div class="col-lg-3 col-md-6 text-center">
++                <div class="service-box">
++                    <i class="fa fa-4x fa-code text-primary sr-icons"></i>
++                    <h3>Open Source</h3>
++                    <p class="text-muted">WATT is a free and open source. Easy to pick up for beginners.</p>
++                </div>
++            </div>
++        </div>
++    </div>
++</section>
++<aside id="download" class="bg-dark">
++    <div class="container text-center">
++        <div class="call-to-action">
++            <h2>Free Download at Github</h2>
++            <a href="http://coding.sec.samsung.net/RS7-HighPerformanceWeb/WATT/releases" class="btn btn-default btn-xl sr-button">Download Now!</a>
++        </div>
++    </div>
++</aside>
+diff --git a/client/app/main/main.routes.js b/client/app/main/main.routes.js
+new file mode 100644
+index 00000000..280e75b3
+--- /dev/null
++++ b/client/app/main/main.routes.js
+@@ -0,0 +1,10 @@
++'use strict';
++
++export default function routes($stateProvider) {
++  'ngInject';
++
++  $stateProvider.state('main', {
++    url: '/',
++    template: '<main></main>'
++  });
++}
+diff --git a/client/polyfills.js b/client/polyfills.js
+new file mode 100644
+index 00000000..314b929a
+--- /dev/null
++++ b/client/polyfills.js
+@@ -0,0 +1,28 @@
++// Polyfills
++// (these modules are what are in 'angular2/bundles/angular2-polyfills' so don't use that here)
++
++// import 'ie-shim'; // Internet Explorer
++// import 'es6-shim';
++// import 'es6-promise';
++// import 'es7-reflect-metadata';
++
++// Prefer CoreJS over the polyfills above
++import 'core-js/es6';
++import 'core-js/es7/reflect';
++// require('zone.js/dist/zone');
++
++
++if(!ENV) {
++  var ENV = 'development';
++}
++
++if(ENV === 'production') {
++  // Production
++} else {
++  // Development
++
++
++  Error.stackTraceLimit = Infinity;
++
++  // require('zone.js/dist/long-stack-trace-zone');
++}
+diff --git a/package.json b/package.json
+index 41b6f49f..a3dc701d 100644
+--- a/package.json
++++ b/package.json
+@@ -1,68 +1,57 @@
+ {
+   "name": "watt",
+-  "version": "0.5.0",
++  "version": "0.6.0",
+   "private": true,
+   "scripts": {
+-    "start": "node ./app.js",
+-    "test": "make test"
+-  },
+-  "nyc": {
+-    "exclude": [
+-      "libs/*.js",
+-      "libs/brackets-server/lib/**",
+-      "(**/|)test/**"
+-    ]
++    "start": "node server"
+   },
+   "engines": {
+     "node": ">6.9.5"
+   },
+   "dependencies": {
+-    "admin-lte": "^2.3.11",
+-    "async": "^2.3.0",
+-    "bcrypt-nodejs": "0.0.3",
+-    "body-parser": "~1.16.0",
+-    "bootstrap": "^3.3.7",
+-    "config": "^1.25.1",
+-    "connect-flash": "^0.1.1",
+-    "cookie-parser": "~1.4.3",
+-    "creative": "https://github.com/BlackrockDigital/startbootstrap-creative/archive/v3.3.7+1.tar.gz",
+-    "debug": "~2.6.0",
+-    "ejs": "~2.5.5",
+-    "express": "~4.14.1",
+-    "express-session": "^1.15.1",
+-    "extract-zip": "^1.6.5",
+-    "font-awesome": "^4.7.0",
+-    "formidable": "^1.1.1",
+-    "fs-extra": "^2.0.0",
+-    "grunt": "^1.0.1",
+-    "image-to-uri": "^1.0.0",
+-    "jquery": "^3.2.1",
+-    "jquery.easing": "^1.4.1",
+-    "magnific-popup": "^1.1.0",
+-    "mongoose": "^4.8.4",
+-    "morgan": "~1.7.0",
+-    "passport": "^0.3.2",
+-    "passport-local": "^1.0.0",
+-    "scrollreveal": "^3.3.6",
+-    "serve-favicon": "~2.3.2",
+-    "socket.io": "^2.0.3",
+-    "web-app-manifest-validator": "^1.0.0",
+-    "xml2js": "^0.4.17"
++    "angular": "~1.6.0",
++    "angular-cookies": "~1.6.0",
++    "angular-resource": "~1.6.0",
++    "angular-sanitize": "~1.6.0",
++    "angular-ui-bootstrap": "^2.0.1",
++    "angular-ui-router": "~0.3.1",
++    "bootstrap": "~3.3.7",
++    "bootstrap-sass": "~3.3.7",
++    "bootstrap-social": "^5.0.0",
++    "core-js": "^2.2.1",
++    "ejs": "^2.5.3",
++    "errorhandler": "^1.4.2",
++    "express": "^4.13.3",
++    "font-awesome": ">=4.1.0",
++    "morgan": "^1.8.0",
++    "startbootstrap-creative": "^4.0.0-beta"
+   },
+   "devDependencies": {
+-    "chai": "^3.5.0",
+-    "chai-http": "^3.0.0",
+-    "grunt-contrib-csslint": "^2.0.0",
+-    "grunt-contrib-jshint": "^1.1.0",
+-    "grunt-contrib-watch": "^1.0.0",
+-    "grunt-eslint": "^20.0.0",
+-    "grunt-gitnewer": "^1.0.5",
+-    "grunt-html": "^8.4.0",
+-    "load-grunt-tasks": "^3.5.2",
+-    "mocha": "^3.2.0",
+-    "node-mocks-http": "^0.0.6",
+-    "nyc": "^11.0.2",
+-    "shared-git-hooks": "^1.2.1",
+-    "tmp": "^0.0.31"
++    "autoprefixer": "^6.0.0",
++    "awesome-typescript-loader": "^1.1.1",
++    "babel-core": "^6.6.5",
++    "babel-loader": "^6.2.4",
++    "babel-plugin-transform-class-properties": "^6.6.0",
++    "babel-plugin-transform-runtime": "^6.6.0",
++    "babel-preset-es2015": "^6.6.0",
++    "babel-register": "^6.6.5",
++    "browser-sync": "^2.8.0",
++    "bs-fullscreen-message": "^1.0.0",
++    "css-loader": "^0.24.0",
++    "extract-text-webpack-plugin": "^1.0.1",
++    "file-loader": "^0.9.0",
++    "html-webpack-plugin": "^2.16.0",
++    "html-webpack-harddisk-plugin": "~0.0.2",
++    "imports-loader": "^0.6.5",
++    "ng-annotate-loader": "~0.1.0",
++    "node-sass": "^3.8.0",
++    "null-loader": "^0.1.1",
++    "postcss-loader": "^0.11.1",
++    "raw-loader": "^0.5.1",
++    "sass-loader": "^4.0.1",
++    "strip-ansi": "^3.0.1",
++    "style-loader": "^0.13.0",
++    "webpack": "^1.12.14",
++    "webpack-dev-middleware": "^1.5.1"
+   }
+ }
+diff --git a/server/app.js b/server/app.js
+new file mode 100644
+index 00000000..92de049c
+--- /dev/null
++++ b/server/app.js
+@@ -0,0 +1,22 @@
++'use strict';
++
++import config from './config/environment';
++import express from 'express';
++import http from 'http';
++
++var app = express();
++var server = http.createServer(app);
++
++require('./config/express').default(app);
++require('./routes').default(app);
++
++// Start server
++function startServer() {
++  app.angularFullstack = server.listen(config.port, config.ip, () => {
++      console.log('Express server listening on %d, in %s mode', config.port, app.get('env'));
++  });
++}
++
++setImmediate(startServer);
++
++exports = module.exports = app;
+diff --git a/server/components/errors/index.js b/server/components/errors/index.js
+new file mode 100644
+index 00000000..39ccfc98
+--- /dev/null
++++ b/server/components/errors/index.js
+@@ -0,0 +1,18 @@
++'use strict';
++
++module.exports[404] = function pageNotFound(req, res) {
++  var viewFilePath = '404';
++  var statusCode = 404;
++  var result = {
++    status: statusCode
++  };
++
++  res.status(result.status);
++  res.render(viewFilePath, {}, function(err, html) {
++    if(err) {
++      return res.status(result.status).json(result);
++    }
++
++    res.send(html);
++  });
++};
+diff --git a/server/config/environment/index.js b/server/config/environment/index.js
+new file mode 100644
+index 00000000..b39301b0
+--- /dev/null
++++ b/server/config/environment/index.js
+@@ -0,0 +1,61 @@
++'use strict';
++/*eslint no-process-env:0*/
++
++import path from 'path';
++import _ from 'lodash';
++
++/*function requiredProcessEnv(name) {
++  if(!process.env[name]) {
++    throw new Error('You must set the ' + name + ' environment variable');
++  }
++  return process.env[name];
++}*/
++
++// All configurations will extend these options
++// ============================================
++var all = {
++  env: process.env.NODE_ENV,
++
++  // Root path of server
++  root: path.normalize(`${__dirname}/../../..`),
++
++  // Browser-sync port
++  browserSyncPort: process.env.BROWSER_SYNC_PORT || 3000,
++
++  // Server port
++  port: process.env.PORT || 9000,
++
++  // Server IP
++  ip: process.env.IP || '0.0.0.0',
++
++  // Should we populate the DB with sample data?
++//   seedDB: false,
++
++  // Secret for session, you will want to change this and make it an environment variable
++  secrets: {
++    session: 'watt-secret'
++  },
++
++  // MongoDB connection options
++  mongo: {
++    options: {
++      db: {
++        safe: true
++      }
++    }
++  },
++
++//   google: {
++//     clientID: process.env.GOOGLE_ID || 'id',
++//     clientSecret: process.env.GOOGLE_SECRET || 'secret',
++//     callbackURL: `${process.env.DOMAIN || ''}/auth/google/callback`
++//   }
++};
++
++// Export the config object based on the NODE_ENV
++// ==============================================
++// module.exports = _.merge(
++//   all,
++//   require('./shared'),
++//   require(`./${process.env.NODE_ENV}.js`) || {});
++module.exports = all;
+\ No newline at end of file
+diff --git a/server/config/express.js b/server/config/express.js
+new file mode 100644
+index 00000000..9f36cd35
+--- /dev/null
++++ b/server/config/express.js
+@@ -0,0 +1,133 @@
++/**
++ * Express configuration
++ */
++
++'use strict';
++
++import express from 'express';
++// import favicon from 'serve-favicon';
++import morgan from 'morgan';
++// import compression from 'compression';
++// import bodyParser from 'body-parser';
++// import methodOverride from 'method-override';
++// import cookieParser from 'cookie-parser';
++import errorHandler from 'errorhandler';
++import path from 'path';
++// import lusca from 'lusca';
++import config from './environment';
++// import passport from 'passport';
++// import session from 'express-session';
++// import connectMongo from 'connect-mongo';
++// import mongoose from 'mongoose';
++// var MongoStore = connectMongo(session);
++
++export default function(app) {
++  var env = app.get('env');
++
++  if(env === 'development' || env === 'test') {
++    app.use(express.static(path.join(config.root, '.tmp')));
++  }
++
++  if(env === 'production') {
++    app.use(favicon(path.join(config.root, 'client', 'favicon.ico')));
++  }
++
++  app.set('appPath', path.join(config.root, 'client'));
++  app.use(express.static(app.get('appPath')));
++  app.use(morgan('dev'));
++
++  app.set('views', `${config.root}/server/views`);
++  app.engine('html', require('ejs').renderFile);
++  app.set('view engine', 'html');
++//   app.use(compression());
++//   app.use(bodyParser.urlencoded({ extended: false }));
++//   app.use(bodyParser.json());
++//   app.use(methodOverride());
++//   app.use(cookieParser());
++//   app.use(passport.initialize());
++
++
++//   // Persist sessions with MongoStore / sequelizeStore
++//   // We need to enable sessions for passport-twitter because it's an
++//   // oauth 1.0 strategy, and Lusca depends on sessions
++//   app.use(session({
++//     secret: config.secrets.session,
++//     saveUninitialized: true,
++//     resave: false,
++//     store: new MongoStore({
++//       mongooseConnection: mongoose.connection,
++//       db: 'generator-angular-fullstack'
++//     })
++//   }));
++
++//   /**
++//    * Lusca - express server security
++//    * https://github.com/krakenjs/lusca
++//    */
++//   if(env !== 'test' && !process.env.SAUCE_USERNAME) {
++//     app.use(lusca({
++//       csrf: {
++//         angular: true
++//       },
++//       xframe: 'SAMEORIGIN',
++//       hsts: {
++//         maxAge: 31536000, //1 year, in seconds
++//         includeSubDomains: true,
++//         preload: true
++//       },
++//       xssProtection: true
++//     }));
++//   }
++
++  if(env === 'development') {
++    const webpackDevMiddleware = require('webpack-dev-middleware');
++    const stripAnsi = require('strip-ansi');
++    const webpack = require('webpack');
++    const makeWebpackConfig = require('../../webpack.make');
++    const webpackConfig = makeWebpackConfig({ DEV: true });
++    const compiler = webpack(webpackConfig);
++    const browserSync = require('browser-sync').create();
++
++    /**
++     * Run Browsersync and use middleware for Hot Module Replacement
++     */
++    browserSync.init({
++      open: false,
++      logFileChanges: false,
++      proxy: `localhost:${config.port}`,
++      ws: true,
++      middleware: [
++        webpackDevMiddleware(compiler, {
++          noInfo: false,
++          stats: {
++            colors: true,
++            timings: true,
++            chunks: false
++          }
++        })
++      ],
++      port: config.browserSyncPort,
++      plugins: ['bs-fullscreen-message']
++    });
++
++    /**
++     * Reload all devices when bundle is complete
++     * or send a fullscreen error message to the browser instead
++     */
++    compiler.plugin('done', function(stats) {
++      console.log('webpack done hook');
++      if(stats.hasErrors() || stats.hasWarnings()) {
++        return browserSync.sockets.emit('fullscreen:message', {
++          title: 'Webpack Error:',
++          body: stripAnsi(stats.toString()),
++          timeout: 100000
++        });
++      }
++      browserSync.reload();
++    });
++  }
++
++  if(env === 'development' || env === 'test') {
++    app.use(errorHandler()); // Error handler - has to be last
++  }
++}
+diff --git a/server/index.js b/server/index.js
+new file mode 100644
+index 00000000..cc279f5b
+--- /dev/null
++++ b/server/index.js
+@@ -0,0 +1,12 @@
++'use strict';
++
++// Set default node environment to development
++var env = process.env.NODE_ENV = process.env.NODE_ENV || 'development';
++
++if(env === 'development' || env === 'test') {
++  // Register the Babel require hook
++  require('babel-register');
++}
++
++// Export the application
++exports = module.exports = require('./app');
+diff --git a/server/routes.js b/server/routes.js
+new file mode 100644
+index 00000000..97b06203
+--- /dev/null
++++ b/server/routes.js
+@@ -0,0 +1,22 @@
++'use strict';
++
++import errors from './components/errors';
++import path from 'path';
++
++export default function(app) {
++  // Insert routes below
++//   app.use('/api/things', require('./api/thing'));
++//   app.use('/api/users', require('./api/user'));
++
++//   app.use('/auth', require('./auth').default);
++
++  // All undefined asset or api routes should return a 404
++  app.route('/:url(api|auth|components|app|bower_components|assets)/*')
++   .get(errors[404]);
++
++  // All other routes should redirect to the app.html
++  app.route('/*')
++    .get((req, res) => {
++      res.sendFile(path.resolve(`${app.get('appPath')}/app.html`));
++    });
++}
+diff --git a/server/views/404.html b/server/views/404.html
+new file mode 100644
+index 00000000..ec98e3c2
+--- /dev/null
++++ b/server/views/404.html
+@@ -0,0 +1,157 @@
++<!DOCTYPE html>
++<html lang="en">
++  <head>
++    <meta charset="utf-8">
++    <title>Page Not Found :(</title>
++    <style>
++      ::-moz-selection {
++        background: #b3d4fc;
++        text-shadow: none;
++      }
++
++      ::selection {
++        background: #b3d4fc;
++        text-shadow: none;
++      }
++
++      html {
++        padding: 30px 10px;
++        font-size: 20px;
++        line-height: 1.4;
++        color: #737373;
++        background: #f0f0f0;
++        -webkit-text-size-adjust: 100%;
++        -ms-text-size-adjust: 100%;
++      }
++
++      html,
++      input {
++        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
++      }
++
++      body {
++        max-width: 500px;
++        _width: 500px;
++        padding: 30px 20px 50px;
++        border: 1px solid #b3b3b3;
++        border-radius: 4px;
++        margin: 0 auto;
++        box-shadow: 0 1px 10px #a7a7a7, inset 0 1px 0 #fff;
++        background: #fcfcfc;
++      }
++
++      h1 {
++        margin: 0 10px;
++        font-size: 50px;
++        text-align: center;
++      }
++
++      h1 span {
++        color: #bbb;
++      }
++
++      h3 {
++        margin: 1.5em 0 0.5em;
++      }
++
++      p {
++        margin: 1em 0;
++      }
++
++      ul {
++        padding: 0 0 0 40px;
++        margin: 1em 0;
++      }
++
++      .container {
++        max-width: 380px;
++        _width: 380px;
++        margin: 0 auto;
++      }
++
++      /* google search */
++
++      #goog-fixurl ul {
++        list-style: none;
++        padding: 0;
++        margin: 0;
++      }
++
++      #goog-fixurl form {
++        margin: 0;
++      }
++
++      #goog-wm-qt,
++      #goog-wm-sb {
++        border: 1px solid #bbb;
++        font-size: 16px;
++        line-height: normal;
++        vertical-align: top;
++        color: #444;
++        border-radius: 2px;
++      }
++
++      #goog-wm-qt {
++        width: 220px;
++        height: 20px;
++        padding: 5px;
++        margin: 5px 10px 0 0;
++        box-shadow: inset 0 1px 1px #ccc;
++      }
++
++      #goog-wm-sb {
++        display: inline-block;
++        height: 32px;
++        padding: 0 10px;
++        margin: 5px 0 0;
++        white-space: nowrap;
++        cursor: pointer;
++        background-color: #f5f5f5;
++        background-image: -webkit-linear-gradient(rgba(255,255,255,0), #f1f1f1);
++        background-image: -moz-linear-gradient(rgba(255,255,255,0), #f1f1f1);
++        background-image: -ms-linear-gradient(rgba(255,255,255,0), #f1f1f1);
++        background-image: -o-linear-gradient(rgba(255,255,255,0), #f1f1f1);
++        -webkit-appearance: none;
++        -moz-appearance: none;
++        appearance: none;
++        *overflow: visible;
++        *display: inline;
++        *zoom: 1;
++      }
++
++      #goog-wm-sb:hover,
++      #goog-wm-sb:focus {
++        border-color: #aaa;
++        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
++        background-color: #f8f8f8;
++      }
++
++      #goog-wm-qt:hover,
++      #goog-wm-qt:focus {
++        border-color: #105cb6;
++        outline: 0;
++        color: #222;
++      }
++
++      input::-moz-focus-inner {
++        padding: 0;
++        border: 0;
++      }
++    </style>
++  </head>
++  <body>
++    <div class="container">
++      <h1>Not found <span>:(</span></h1>
++      <p>Sorry, but the page you were trying to view does not exist.</p>
++      <p>It looks like this was the result of either:</p>
++      <ul>
++        <li>a mistyped address</li>
++        <li>an out-of-date link</li>
++      </ul>
++      <script>
++        var GOOG_FIXURL_LANG = (navigator.language || '').slice(0,2),GOOG_FIXURL_SITE = location.host;
++      </script>
++      <script src="//linkhelp.clients.google.com/tbproxy/lh/wm/fixurl.js"></script>
++    </div>
++  </body>
++</html>
+diff --git a/webpack.dev.js b/webpack.dev.js
+new file mode 100644
+index 00000000..6b225943
+--- /dev/null
++++ b/webpack.dev.js
+@@ -0,0 +1,8 @@
++/**
++ * Webpack config for development
++ */
++module.exports = require('./webpack.make')({
++    BUILD: false,
++    TEST: false,
++    DEV: true
++});
+\ No newline at end of file
+diff --git a/webpack.make.js b/webpack.make.js
+new file mode 100644
+index 00000000..7d1694e7
+--- /dev/null
++++ b/webpack.make.js
+@@ -0,0 +1,372 @@
++'use strict';
++/*eslint-env node*/
++var webpack = require('webpack');
++var autoprefixer = require('autoprefixer');
++var HtmlWebpackPlugin = require('html-webpack-plugin');
++var HtmlWebpackHarddiskPlugin = require('html-webpack-harddisk-plugin');
++var ExtractTextPlugin = require('extract-text-webpack-plugin');
++var CommonsChunkPlugin = webpack.optimize.CommonsChunkPlugin;
++var fs = require('fs');
++var path = require('path');
++// var ForkCheckerPlugin = require('awesome-typescript-loader').ForkCheckerPlugin;
++
++module.exports = function makeWebpackConfig(options) {
++    /**
++     * Environment type
++     * BUILD is for generating minified builds
++     * TEST is for generating test builds
++     */
++    var BUILD = !!options.BUILD;
++    var TEST = !!options.TEST;
++    var E2E = !!options.E2E;
++    var DEV = !!options.DEV;
++
++    /**
++     * Config
++     * Reference: http://webpack.github.io/docs/configuration.html
++     * This is the object where all configuration gets set
++     */
++    var config = {};
++
++    /**
++     * Entry
++     * Reference: http://webpack.github.io/docs/configuration.html#entry
++     * Should be an empty object if it's generating a test build
++     * Karma will set this when it's a test build
++     */
++    if(TEST) {
++        config.entry = {};
++    } else {
++        config.entry = {
++            app: './client/app/app.js',
++            polyfills: './client/polyfills.js',
++            vendor: [
++                'angular',
++                // 'angular-animate',
++                // 'angular-aria',
++                'angular-cookies',
++                'angular-resource',
++                'angular-sanitize',
++
++                'angular-ui-bootstrap',
++                'angular-ui-router',
++                // 'lodash'
++            ]
++        };
++    }
++
++    /**
++     * Output
++     * Reference: http://webpack.github.io/docs/configuration.html#output
++     * Should be an empty object if it's generating a test build
++     * Karma will handle setting it up for you when it's a test build
++     */
++    if(TEST) {
++        config.output = {};
++    } else {
++        config.output = {
++            // Absolute output directory
++            path: BUILD ? path.join(__dirname, '/dist/client/') : path.join(__dirname, '/.tmp/'),
++
++            // Output path from the view of the page
++            // Uses webpack-dev-server in development
++            publicPath: BUILD || DEV || E2E ? '/' : `http://localhost:${8080}/`,
++            //publicPath: BUILD ? '/' : 'http://localhost:' + env.port + '/',
++
++            // Filename for entry points
++            // Only adds hash in build mode
++            filename: BUILD ? '[name].[hash].js' : '[name].bundle.js',
++
++            // Filename for non-entry points
++            // Only adds hash in build mode
++            chunkFilename: BUILD ? '[name].[hash].js' : '[name].bundle.js'
++        };
++    }
++
++
++
++    // if(TEST) {
++    //     config.resolve = {
++    //         modulesDirectories: [
++    //             'node_modules'
++    //         ],
++    //         extensions: ['', '.js', '.ts']
++    //     };
++    // }
++
++    /**
++     * Devtool
++     * Reference: http://webpack.github.io/docs/configuration.html#devtool
++     * Type of sourcemap to use per build type
++     */
++    if(TEST) {
++        config.devtool = 'inline-source-map';
++    } else if(BUILD || DEV) {
++        config.devtool = 'source-map';
++    } else {
++        config.devtool = 'eval';
++    }
++
++    /**
++     * Loaders
++     * Reference: http://webpack.github.io/docs/configuration.html#module-loaders
++     * List: http://webpack.github.io/docs/list-of-loaders.html
++     * This handles most of the magic responsible for converting modules
++     */
++
++    config.sassLoader = {
++        outputStyle: 'compressed',
++        precision: 10,
++        sourceComments: false
++    };
++
++    config.babel = {
++        shouldPrintComment(commentContents) {
++            // keep `/*@ngInject*/`
++            return /@ngInject/.test(commentContents);
++        }
++    }
++
++    // Initialize module
++    config.module = {
++        preLoaders: [],
++        loaders: [{
++            // JS LOADER
++            // Reference: https://github.com/babel/babel-loader
++            // Transpile .js files using babel-loader
++            // Compiles ES6 and ES7 into ES5 code
++            test: /\.js$/,
++            loader: 'babel',
++            include: [
++                path.resolve(__dirname, 'client/'),
++                path.resolve(__dirname, 'node_modules/startbootstrap-creative/js/creative.min.js'),
++                // path.resolve(__dirname, 'node_modules/lodash-es/')
++            ]
++        }, 
++        // {
++        //     // TS LOADER
++        //     // Reference: https://github.com/s-panferov/awesome-typescript-loader
++        //     // Transpile .ts files using awesome-typescript-loader
++        //     test: /\.ts$/,
++        //     loader: 'awesome-typescript-loader',
++        //     query: {
++        //         tsconfig: path.resolve(__dirname, 'tsconfig.client.json')
++        //     },
++        //     include: [
++        //         path.resolve(__dirname, 'client/')
++        //     ]
++        // }, 
++        {
++            // ASSET LOADER
++            // Reference: https://github.com/webpack/file-loader
++            // Copy png, jpg, jpeg, gif, svg, woff, woff2, ttf, eot files to output
++            // Rename the file using the asset hash
++            // Pass along the updated reference to your code
++            // You can add here any file extension you want to get copied to your output
++            test: /\.(png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)([\?]?.*)$/,
++            loader: 'file'
++        }, {
++
++            // HTML LOADER
++            // Reference: https://github.com/webpack/raw-loader
++            // Allow loading html through js
++            test: /\.html$/,
++            loader: 'raw'
++        }, {
++            // CSS LOADER
++            // Reference: https://github.com/webpack/css-loader
++            // Allow loading css through js
++            //
++            // Reference: https://github.com/postcss/postcss-loader
++            // Postprocess your css with PostCSS plugins
++            test: /\.css$/,
++            loader: !TEST
++                // Reference: https://github.com/webpack/extract-text-webpack-plugin
++                // Extract css files in production builds
++                //
++                // Reference: https://github.com/webpack/style-loader
++                // Use style-loader in development for hot-loading
++                ? ExtractTextPlugin.extract('style', 'css!postcss')
++                // Reference: https://github.com/webpack/null-loader
++                // Skip loading css in test mode
++                : 'null'
++        }, {
++            // SASS LOADER
++            // Reference: https://github.com/jtangelder/sass-loader
++            test: /\.(scss|sass)$/,
++            loaders: ['style', 'css', 'sass'],
++            include: [
++                path.resolve(__dirname, 'node_modules/bootstrap-sass/assets/stylesheets/*.scss'),
++                path.resolve(__dirname, 'node_modules/startbootstrap-creative/scss/*.scss'),
++                path.resolve(__dirname, 'client/app/app.scss')
++            ]
++
++
++        }]
++    };
++
++    config.module.postLoaders = [{
++        test: /\.js$/,
++        loader: 'ng-annotate?single_quotes'
++    }];
++
++    // ISPARTA INSTRUMENTER LOADER
++    // Reference: https://github.com/ColCh/isparta-instrumenter-loader
++    // Instrument JS files with Isparta for subsequent code coverage reporting
++    // Skips node_modules and spec files
++    // if(TEST) {
++    //     config.module.preLoaders.push({
++    //         //delays coverage til after tests are run, fixing transpiled source coverage error
++    //         test: /\.js$/,
++    //         exclude: /(node_modules|spec\.js|mock\.js)/,
++    //         loader: 'isparta-instrumenter',
++    //         query: {
++    //             babel: {
++    //                 // optional: ['runtime', 'es7.classProperties', 'es7.decorators']
++    //             }
++    //         }
++    //     });
++    // }
++
++
++    /**
++     * PostCSS
++     * Reference: https://github.com/postcss/autoprefixer-core
++     * Add vendor prefixes to your css
++     */
++    config.postcss = [
++        autoprefixer({
++            browsers: ['last 2 version']
++        })
++    ];
++
++    /**
++     * Plugins
++     * Reference: http://webpack.github.io/docs/configuration.html#plugins
++     * List: http://webpack.github.io/docs/list-of-plugins.html
++     */
++    config.plugins = [
++        /*
++         * Plugin: ForkCheckerPlugin
++         * Description: Do type checking in a separate process, so webpack don't need to wait.
++         *
++         * See: https://github.com/s-panferov/awesome-typescript-loader#forkchecker-boolean-defaultfalse
++         */
++        // new ForkCheckerPlugin(),
++
++        // Reference: https://github.com/webpack/extract-text-webpack-plugin
++        // Extract css files
++        // Disabled when in test mode or not in build mode
++        new ExtractTextPlugin('[name].[hash].css', {
++            disable: !BUILD || TEST
++        })
++    ];
++
++    if(!TEST) {
++        config.plugins.push(new CommonsChunkPlugin({
++            name: 'vendor',
++
++            // filename: "vendor.js"
++            // (Give the chunk a different name)
++
++            minChunks: Infinity
++            // (with more entries, this ensures that no other module
++            //  goes into the vendor chunk)
++        }));
++    }
++
++    // Skip rendering app.html in test mode
++    // Reference: https://github.com/ampedandwired/html-webpack-plugin
++    // Render app.html
++    if(!TEST) {
++        let htmlConfig = {
++            template: 'client/app.template.html',
++            filename: '../client/app.html',
++            alwaysWriteToDisk: true
++        }
++        config.plugins.push(
++          new HtmlWebpackPlugin(htmlConfig),
++          new HtmlWebpackHarddiskPlugin()
++        );
++    }
++
++    // Add build specific plugins
++    // if(BUILD) {
++    //     config.plugins.push(
++    //         // Reference: http://webpack.github.io/docs/list-of-plugins.html#noerrorsplugin
++    //         // Only emit files when there are no errors
++    //         new webpack.NoErrorsPlugin(),
++
++    //         // Reference: http://webpack.github.io/docs/list-of-plugins.html#dedupeplugin
++    //         // Dedupe modules in the output
++    //         new webpack.optimize.DedupePlugin(),
++
++    //         // Reference: http://webpack.github.io/docs/list-of-plugins.html#uglifyjsplugin
++    //         // Minify all javascript, switch loaders to minimizing mode
++    //         new webpack.optimize.UglifyJsPlugin({
++    //             mangle: false,
++    //             output: {
++    //                 comments: false
++    //             },
++    //             compress: {
++    //                 warnings: false
++    //             }
++    //         }),
++
++    //         // Reference: https://webpack.github.io/docs/list-of-plugins.html#defineplugin
++    //         // Define free global variables
++    //         new webpack.DefinePlugin({
++    //             'process.env': {
++    //                 NODE_ENV: '"production"'
++    //             }
++    //         })
++    //     );
++    // }
++
++    if(DEV) {
++        config.plugins.push(
++            // Reference: https://webpack.github.io/docs/list-of-plugins.html#defineplugin
++            // Define free global variables
++            new webpack.DefinePlugin({
++                'process.env': {
++                    NODE_ENV: '"development"'
++                }
++            })
++        );
++    }
++
++    config.cache = DEV;
++
++    // if(TEST) {
++    //     config.stats = {
++    //         colors: true,
++    //         reasons: true
++    //     };
++    //     config.debug = false;
++    // }
++
++    /**
++     * Dev server configuration
++     * Reference: http://webpack.github.io/docs/configuration.html#devserver
++     * Reference: http://webpack.github.io/docs/webpack-dev-server.html
++     */
++    config.devServer = {
++        contentBase: './client/',
++        stats: {
++            modules: false,
++            cached: false,
++            colors: true,
++            chunk: false
++        }
++    };
++
++    config.node = {
++        global: 'window',
++        process: true,
++        crypto: 'empty',
++        clearImmediate: false,
++        setImmediate: false
++    };
++
++    return config;
++};
+-- 
+2.14.0.windows.2
+
